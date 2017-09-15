@@ -122,6 +122,17 @@
                     </div>
 
                   </form>
+                  <div>
+                    <h3 class="box-title">Users Projects</h3>
+                    <table class="table table-hover">
+                      <th>Project Name</th>
+                      {% for project in projects %}
+                      <tr>
+                        <td><a href="{{ request.route_path('admin.project.detail', project_name=project.project.normalized_name ) }}">{{ project.name }}</a></td>
+                      </tr>
+                      {% endfor %}
+                    </table>
+                  </div>
               </div>
           </div>
       </div>

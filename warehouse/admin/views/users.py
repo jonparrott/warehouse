@@ -19,10 +19,12 @@ from paginate_sqlalchemy import SqlalchemyOrmPage as SQLAlchemyORMPage
 from pyramid.httpexceptions import HTTPSeeOther, HTTPBadRequest, HTTPNotFound
 from pyramid.view import view_config
 from sqlalchemy import or_
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 
 from warehouse import forms
 from warehouse.accounts.models import User, Email
+from warehouse.packaging.models import Project, Release
 from warehouse.utils.paginate import paginate_url_factory
 
 
@@ -109,10 +111,20 @@ def user_detail(request):
     except NoResultFound:
         raise HTTPNotFound
 
+    projects = (
+        request.db.query(Release)
+                  .options(joinedload(Release.project))
+                  .join(Project)
+                  .distinct(Project.name)
+                  .filter(Project.users.contains(user))
+                  .order_by(Project.name, Release._pypi_ordering.desc())
+                  .all()
+    )
+
     form = UserForm(request.POST, user)
 
     if request.method == "POST" and form.validate():
         form.populate_obj(user)
         return HTTPSeeOther(location=request.current_route_path())
 
-    return {"user": user, "form": form}
+    return {"user": user, "form": form, "projects": projects}
